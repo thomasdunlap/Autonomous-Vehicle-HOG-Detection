@@ -1,14 +1,14 @@
-## Writeup Template
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+# Vehicle Detection Project
+
 
 ---
 
-**Vehicle Detection Project**
+
 
 The goals / steps of this project are the following:
 
 * Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
+* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector.
 * Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
 * Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
@@ -38,26 +38,32 @@ You're reading it!
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
+The code for this step is contained in the "Visualize Images" code cell of the IPython notebook.  
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
 
 ![alt text][image1]
 
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
-
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+In cell one under HOG Feature Extraction, I used the function `get_hog_features()` to calculate and visualize the orientation of gradients in the various images.  Here is an example of how the gradient directions are similar with vehicles, and more random with non-vehicles:
 
 
 ![alt text][image2]
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters and...
+I tried various combinations of parameters through trial and error.  I briefly attempted to set up function that would run through a variety of SVM parameters and display them, but my computer is too slow.  Here are the final HOG parameters:
+
+| HOG Parameter   |  Value       |  
+| -------------   |-------------:|
+| Color Space     | 'YCrCb' |
+| Orientations    | 8     |   
+| Pixels Per Cell | 12      |    
+| Cells Per Block | 2 |
+| HOG Channels    | 'ALL' |
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
+I trained a `LinearSVC()` using Scikit Learn's linear SVM library.  Trained just on the HOG features, it achieved a .982 accuracy and took 0.00403 seconds to predict 10 labels (all correct) after training.
 
 ### Sliding Window Search
 
@@ -104,5 +110,12 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+Vehicles near each other tend to be classified as one object instead of two.  
 
+Will probably fail if car looks significantly different from vehicles in the training set.  Also, a motocycle is technically a vehicle, and that probably would not get picked up.  
+
+There are some false positives when the winders interpret the guard rails as an obstacle.  The most important thing is not having false positives in the roadway.
+
+If a car was traveling with something tied to it's roof, or bicycles on the back of it the classifier may have difficulty.  If it's towing something that doesn't look like a vehicle.
+
+distant cars weren't picked up, which makes sense because they take up fewer pixels and would have less detailed gradients.  Also, in practice, it is not overly necessary to recognize objects that are not close enough to cause a collision.
