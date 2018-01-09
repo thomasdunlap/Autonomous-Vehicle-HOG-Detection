@@ -15,7 +15,7 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./output_images/v_and_nonV.png
+[image1]: ./output_images/v_and_nonv.png
 [image2]: ./output_images/vhog_nvhog.png
 [image3]: ./output_images/all_rects.png
 [image4]: ./output_images/6_processed_imgs.png
@@ -47,7 +47,7 @@ I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an 
 
 ![alt text][image1]
 
-In cell one under HOG Feature Extraction, I used the function `get_hog_features()` to calculate and visualize the orientation of gradients in the various images.  Here is an example of how the gradient directions are similar with vehicles, and more random with non-vehicles:
+In cell one under HOG Feature Extraction, I used the function `get_hog_features()` to calculate and visualize the orientation of gradients in the various images. It's not obvious at first, but the  Here is an example of how the gradient directions are similar with vehicles, and more random with non-vehicles:
 
 
 ![alt text][image2]
