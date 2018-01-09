@@ -47,8 +47,7 @@ I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an 
 
 ![alt text][image1]
 
-In cell one under HOG Feature Extraction, I used the function `get_hog_features()` to calculate and visualize the orientation of gradients in the various images. It's not obvious at first, but the  Here is an example of how the gradient directions are similar with vehicles, and more random with non-vehicles:
-
+In cell one, under the sub-heading HOG Feature Extraction, I used the function `get_hog_features()` to calculate and visualize the orientation of gradients in the various images. It's not obvious at first, but the vehicles tend to have variety of lines and edges, causing the visualization of gradients to almost resemble fireworks.  Non-vehicles tend to have more random HOG features. Here are examples of how the gradient directions are similar with vehicles, and more random with non-vehicles:
 
 ![alt text][image2]
 
@@ -58,60 +57,64 @@ I tried various combinations of parameters through trial and error.  I briefly a
 
 | HOG Parameter   |  Value       |  
 | -------------   |-------------:|
-| Color Space     | 'YCrCb' |
+| Color Space     | "YCrCb" |
 | Orientations    | 12     |   
 | Pixels Per Cell | 16      |    
-| Cells Per Block | 2 |
-| HOG Channels    | 'ALL' |
+| Cells Per Block | 2     |
+| HOG Channels    | "ALL" |
 
-#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features.
 
-I trained a `LinearSVC()` using Scikit Learn's linear SVM library.  Trained just on the HOG features, it achieved a .982 accuracy and took 0.00403 seconds to predict 10 labels (all correct) after training.
+I trained a `LinearSVC()` using Scikit Learn's linear SVM library.  Trained just on the HOG features, it achieved a .9868 accuracy and took 0.00316 seconds to predict 10 labels (all correct) after training.
 
 ### Sliding Window Search
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+Sliding windows was another trial and error process. The difficulty I faced most was finding a balance between having too many false positives, and not picking up the cars if they got far enough away.
+
+I remedied this by having multiple small scale search zones in the distance - the smaller `ystart` and `ystop` values - and fewer large search zones in the foreground.  Here is a visualization of all the search zones:
 
 ![alt text][image3]
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+Ultimately I searched on six scales using all YCrCb channel HOG features.
+This created ok identifications with a few false positives:
 
 ![alt tx][image4]
+
+Most of these false positives were fixed when I started keeping track of rectangles across multiple video frames.
 ---
 
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_video_out.mp4).
 
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
-
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
-
-### Here are six frames and their corresponding heatmaps:
-
-![alt text][image5]
+I recorded the positions of positive detections in each frame of the video.  
 
 ![alt text][multizone_rects]
 
+From the positive detections I created a heatmap:
+
 ![alt text][heatmap]
+
+And then thresholded that map to identify vehicle positions:  
 
 ![alt text][filtered_heatmap]
 
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
+I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap:
+
 ![alt text][image6]
+
+I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
 ### Here the resulting bounding boxes are drawn onto the last frame in the series:
 ![alt text][image7]
-
-
 
 ---
 
@@ -119,12 +122,20 @@ Here's an example result showing the heatmap from a series of frames of video, t
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Vehicles near each other tend to be classified as one object instead of two.  
+* Vehicles near each other tend to be classified as one object instead of two.  
 
-Will probably fail if car looks significantly different from vehicles in the training set.  Also, a motocycle is technically a vehicle, and that probably would not get picked up.  
+* The pipeline will probably fail if car looks significantly different from vehicles in the training set.  For instance, a motorcycle is technically a vehicle, but it is different looking enough where my classifier may have difficulty recognize one.  
 
-There are some false positives when the winders interpret the guard rails as an obstacle.  The most important thing is not having false positives in the roadway.
+* If a car was traveling with something tied to it's roof, or bicycles on the back of it the classifier may have difficulty.  If it's towing something that doesn't look like a vehicle.
 
-If a car was traveling with something tied to it's roof, or bicycles on the back of it the classifier may have difficulty.  If it's towing something that doesn't look like a vehicle.
+* There are some false positives when the sliding windows interpret the guard rails or trees as vehicles.  This is not horrible, because you would want your car to avoid guard rails and trees, but they obviously aren't vehicles.  
 
-distant cars weren't picked up, which makes sense because they take up fewer pixels and would have less detailed gradients.  Also, in practice, it is not overly necessary to recognize objects that are not close enough to cause a collision.
+* Distant cars get lost once briefly, which makes sense because they take up fewer pixels and would have less detailed gradients.  Again, in practice, it may not be overly necessary to recognize objects that are not close enough to cause a collision.
+
+### Future Improvements:
+
+* Train on multiple types of vehicles (compact, pick up, motorcycle, big rig, etc.), so the classifier doesn't have such a wide number to shapes to identify in the large category that is "Vehicles."
+
+* I had difficulty getting my sliding windows all the way to the right edge of the images.  That is something I'd like to improve when not under the time constraints of the end of Term 1.
+
+* Including xstart and xstop parameters might help `potential_vehicles()` have fewer false positives on the side of the road.
